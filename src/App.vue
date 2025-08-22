@@ -92,6 +92,7 @@
 <script setup>
 import { ref } from 'vue';
 import Etiqueta from './components/Etiqueta.vue';
+import { invoke } from '@tauri-apps/api/core'
 
 const etiquetas = ref([]);
 
@@ -109,24 +110,53 @@ const form = ref({
 
 const selectedFile = ref('');
 
-function handleFileUpload(event) {
+async function handleFileUpload(event) {
   const file = event.target.files[0];
-  if (file) {
-    selectedFile.value = file.name;
-    etiquetas.value = [
-      {
-        tipoPedido: 'PV',
-        numeroPedido: '123',
-        filial: '18 - Cacule',
-        data: '09/09/2023',
-        enderecoEntrega: 'Rua teste',
-        codigoProduto: '123',
-        volume: '01/01',
-        nome: 'Tinta',
-      },
-    ];
+  if (!file) return;
+
+  selectedFile.value = file.name;
+
+  try {
+    console.log("Detalhes do arquivo:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      path: file.path,
+    });
+
+      // Ler como texto (não funciona bem com PDF, mas mostra algo)
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    console.log("🔎 Conteúdo em texto:", e.target.result.slice(0, 200)); // mostra primeiros 200 chars
+  };
+  reader.readAsText(file);
+
+  // Ler como ArrayBuffer (binário)
+  const buffer = await file.arrayBuffer();
+  console.log("🔎 Conteúdo em bytes:", new Uint8Array(buffer).slice(0, 50)); // primeiros 50 bytes
+
+    const result = await invoke('process_pdf', { file_path: file.path }); 
+    const produtos = JSON.parse(result);
+
+    // Expande volumes se necessário
+    const etiquetasComVolumes = [];
+    produtos.forEach(p => {
+      if (p.vol_ace) {
+        const total = parseInt(p.vol_ace.split('/')[1]);
+        for (let i = 1; i <= total; i++) {
+          etiquetasComVolumes.push({ ...p, volume: `${String(i).padStart(2,'0')}/${String(total).padStart(2,'0')}` });
+        }
+      } else {
+        etiquetasComVolumes.push(p);
+      }
+    });
+
+    etiquetas.value = etiquetasComVolumes;
+  } catch (err) {
+    console.error("Erro ao processar PDF:", err);
   }
 }
+
 
 function adicionarEtiqueta() {
   const { volume, ...dados } = form.value;
