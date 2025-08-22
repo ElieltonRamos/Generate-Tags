@@ -129,19 +129,36 @@ function handleFileUpload(event) {
 }
 
 function adicionarEtiqueta() {
-  etiquetas.value.push({ ...form.value });
+  const { volume, ...dados } = form.value;
+
+  // Verifica se o volume está no formato "01/03"
+  const match = volume.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (match) {
+    const total = parseInt(match[2]);
+    for (let i = 1; i <= total; i++) {
+      const numero = i.toString().padStart(2, "0");
+      etiquetas.value.push({
+        ...dados,
+        volume: `${numero}/${total.toString().padStart(2, "0")}`,
+      });
+    }
+  } else {
+    etiquetas.value.push({ ...form.value });
+  }
+
   // limpa o formulário
   form.value = {
-    tipoPedido: '',
-    numeroPedido: '',
-    filial: '',
-    data: '',
-    enderecoEntrega: '',
-    codigoProduto: '',
-    volume: '',
-    nome: '',
+    tipoPedido: "",
+    numeroPedido: "",
+    filial: "",
+    data: "",
+    enderecoEntrega: "",
+    codigoProduto: "",
+    volume: "",
+    nome: "",
   };
 }
+
 
 function removerEtiqueta(index) {
   etiquetas.value.splice(index, 1);
