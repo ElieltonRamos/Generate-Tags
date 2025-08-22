@@ -117,10 +117,9 @@ async function handleFileUpload(event) {
     multiple: false,
     directory: false,
   });
-  console.log(typeof file, '***', file);
 
   try {
-    const result = await invoke('process_pdf', { file_path: file });
+    const result = await invoke('process_pdf', { file: file });
     const produtos = JSON.parse(result);
 
     // Expande volumes se necessário
