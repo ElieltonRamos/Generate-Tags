@@ -1,10 +1,18 @@
 <template>
-  <div class="w-full max-w-lg p-4 mb-6 bg-white border border-gray-400 rounded-xl shadow-md text-black">
+  <div class="relative w-full max-w-lg p-4 mb-6 bg-white border border-gray-400 rounded-xl shadow-md text-black">
+    <!-- Botão de deletar -->
+    <button 
+      @click="$emit('deletar')" 
+      class="absolute top-2 right-2 text-red-600 hover:text-red-800 text-sm font-bold"
+    >
+      ✖
+    </button>
+
     <!-- Cabeçalho com logo -->
     <div class="flex items-center justify-between border-b border-gray-400 pb-2 mb-3">
       <div class="flex items-center">
-        <img src="../assets/logo-rede-norte.png" alt="Logo Empresa" class="h-10 mr-3" />
-        <h2 class="text-lg font-bold">{{ nome }}</h2>
+        <img src="/logo.png" alt="Logo Empresa" class="h-10 mr-3" />
+        <h2 class="text-lg font-bold">DANFE Simplificada</h2>
       </div>
       <span class="text-sm">{{ data }}</span>
     </div>
@@ -19,6 +27,7 @@
       <div>
         <p><span class="font-semibold">Volume:</span> {{ volume }}</p>
         <p><span class="font-semibold">Código Produto:</span> {{ codigoProduto }}</p>
+        <p><span class="font-semibold">Nome:</span> {{ nome }}</p>
       </div>
     </div>
 
@@ -41,4 +50,6 @@ defineProps({
   volume: String,
   nome: String
 })
+
+defineEmits(["deletar"])
 </script>
