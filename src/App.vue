@@ -2,7 +2,7 @@
   <div class="min-h-screen flex flex-col items-center bg-gradient-to-b from-gray-100 to-gray-200 text-black">
     <!-- Topo com logo -->
     <header class="w-full py-4 flex items-center justify-center shadow bg-gray-50">
-      <img src="/logo.png" alt="Logo Empresa" class="h-12 mr-3" />
+      <img src="./assets/logo-rede-norte.png" alt="Logo Empresa" class="h-12 mr-3" />
       <h1 class="text-2xl font-bold text-gray-900">Gerador de Etiquetas</h1>
     </header>
 
@@ -74,10 +74,16 @@
         </form>
       </div>
 
+      <div class="w-full flex justify-end mt-4">
+        <button @click="imprimirEtiquetas" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+          🖨️ Imprimir Etiquetas
+        </button>
+      </div>
+
       <!-- Lista de etiquetas -->
       <section class="w-full mt-10">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Etiquetas Geradas</h2>
-        <div v-if="etiquetas.length > 0">
+        <div class="etiqueta-to-print" v-if="etiquetas.length > 0">
           <Etiqueta v-for="(et, index) in etiquetas" :key="index" v-bind="et" @deletar="removerEtiqueta(index)" />
         </div>
         <p v-else class="text-gray-600 text-center">Nenhuma etiqueta gerada ainda.</p>
@@ -90,8 +96,38 @@
 import { ref } from 'vue';
 import Etiqueta from './components/Etiqueta.vue';
 
-// Lista de etiquetas
 const etiquetas = ref([]);
+
+function imprimirEtiquetas() {
+  const etiquetasContainer = document.createElement('div');
+
+  // Clona cada etiqueta do DOM
+  document.querySelectorAll('.etiqueta-to-print').forEach((el) => {
+    etiquetasContainer.appendChild(el.cloneNode(true));
+  });
+
+  const printWindow = window.open('', '_blank', 'width=400,height=600');
+  if (!printWindow) return;
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Imprimir Etiquetas</title>
+        <style>
+          body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
+          .etiqueta { margin-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        ${etiquetasContainer.innerHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+}
 
 // Formulário
 const form = ref({
@@ -111,7 +147,18 @@ function handleFileUpload(event) {
   const file = event.target.files[0];
   if (file) {
     selectedFile.value = file.name;
-    // 🔹 Aqui segue sua lógica de leitura do PDF
+    etiquetas.value = [
+      {
+        tipoPedido: 'PV',
+        numeroPedido: '123',
+        filial: '18 - Cacule',
+        data: '09/09/2023',
+        enderecoEntrega: 'Rua teste',
+        codigoProduto: '123',
+        volume: '01/01',
+        nome: 'Tinta',
+      },
+    ];
   }
 }
 

@@ -11,7 +11,7 @@
     <!-- Cabeçalho com logo -->
     <div class="flex items-center justify-between border-b border-gray-400 pb-2 mb-3">
       <div class="flex items-center">
-        <img src="/logo.png" alt="Logo Empresa" class="h-10 mr-3" />
+        <img src="../assets/logo-rede-norte.png" alt="Logo Empresa" class="h-10 mr-3" />
         <h2 class="text-lg font-bold">DANFE Simplificada</h2>
       </div>
       <span class="text-sm">{{ data }}</span>
