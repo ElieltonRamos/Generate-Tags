@@ -148,26 +148,29 @@ async function handleFileUpload(event) {
   }
 }
 
-
 function adicionarEtiqueta() {
-  const { volume, ...dados } = form.value;
+  const dados = { ...form.value };
 
-  // Verifica se o volume está no formato "01/03"
-  const match = volume.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (match) {
-    const total = parseInt(match[2]);
+  // Expande volumes se necessário
+  const etiquetasComVolumes = [];
+  if (dados.vol_ace) {
+    const parts = dados.vol_ace.split('/');
+    let total = parseInt(parts[1]);
+    if (!total || total < 1) total = 1; // fallback
     for (let i = 1; i <= total; i++) {
-      const numero = i.toString().padStart(2, "0");
-      etiquetas.value.push({
+      etiquetasComVolumes.push({
         ...dados,
-        volume: `${numero}/${total.toString().padStart(2, "0")}`,
+        vol_ace: `${String(i).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
       });
     }
   } else {
-    etiquetas.value.push({ ...form.value });
+    etiquetasComVolumes.push(dados);
   }
 
-  // limpa o formulário
+  // Adiciona à lista global
+  etiquetas.value = [...etiquetas.value, ...etiquetasComVolumes];
+
+  // Limpa o formulário
   form.value = {
     tipo_pedido: '',
     numero_pedido: '',
@@ -219,7 +222,11 @@ function print() {
           /* Ajustes específicos de impressão */
           @media print {
             body { background: white; width: 100mm; }
-            button { display: none; } /* Oculta botões */
+            button { display: none; }
+            .etiqueta {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
           }
         </style>
       </head>
