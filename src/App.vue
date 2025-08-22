@@ -9,16 +9,16 @@
     <!-- Conteúdo principal -->
     <main class="flex flex-col items-center w-full max-w-3xl p-6">
       <!-- Input PDF -->
+      <!-- Input PDF refatorado -->
       <div class="w-full bg-gray-50 p-6 rounded-2xl shadow-md mt-8 text-center">
-        <label class="block mb-4 text-lg font-semibold text-gray-900"> Selecione um arquivo PDF </label>
+        <label class="block mb-4 text-lg font-semibold text-gray-900">
+          Selecione um arquivo PDF
+        </label>
 
-        <!-- Input escondido -->
-        <input ref="fileInput" type="file" accept="application/pdf" class="hidden" @change="handleFileUpload" />
-
-        <!-- Botão customizado -->
+        <!-- Botão que chama diretamente a função -->
         <button
           type="button"
-          @click="$refs.fileInput.click()"
+          @click="handleFileUpload"
           class="px-6 py-3 rounded-xl bg-gradient-to-r from-gray-400 to-gray-500 text-white font-medium shadow hover:shadow-lg hover:from-gray-500 hover:to-gray-600 transition-all duration-300"
         >
           📂 Escolher Arquivo
@@ -30,41 +30,42 @@
         </p>
       </div>
 
+
       <!-- Formulário Manual -->
       <div class="w-full bg-gray-50 p-6 rounded-2xl shadow-md mt-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Criar Etiqueta Manual</h2>
         <form @submit.prevent="adicionarEtiqueta" class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-900">Tipo Pedido</label>
-            <input v-model="form.tipoPedido" class="input" />
+            <input v-model="form.tipo_pedido" class="input" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-900">Número Pedido</label>
-            <input v-model="form.numeroPedido" class="input" />
+            <input v-model="form.numero_pedido" class="input" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-900">Filial</label>
-            <input v-model="form.filial" class="input" />
+            <input v-model="form.filial_pedido" class="input" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-900">Data</label>
-            <input type="date" v-model="form.data" class="input" />
+            <input type="date" v-model="form.data_pedido" class="input" />
           </div>
           <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-900">Endereço Entrega</label>
-            <input v-model="form.enderecoEntrega" class="input" />
+            <input v-model="form.endereco_entrega" class="input" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-900">Código Produto</label>
-            <input v-model="form.codigoProduto" class="input" />
+            <input v-model="form.code" class="input" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-900">Volume</label>
-            <input v-model="form.volume" class="input" />
+            <input v-model="form.vol_ace" class="input" />
           </div>
           <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-900">Nome</label>
-            <input v-model="form.nome" class="input" />
+            <input v-model="form.description" class="input" />
           </div>
           <div class="col-span-2 text-right">
             <button @click="print" class="px-6 mr-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
@@ -93,62 +94,53 @@
 import { ref } from 'vue';
 import Etiqueta from './components/Etiqueta.vue';
 import { invoke } from '@tauri-apps/api/core'
+import { open } from '@tauri-apps/plugin-dialog';
 
 const etiquetas = ref([]);
 
 // Formulário
 const form = ref({
-  tipoPedido: '',
-  numeroPedido: '',
-  filial: '',
-  data: '',
-  enderecoEntrega: '',
-  codigoProduto: '',
-  volume: '',
-  nome: '',
+  tipo_pedido: '',
+  numero_pedido: '',
+  filial_pedido: '',
+  data_pedido: '',
+  endereco_entrega: '',
+  code: '',
+  vol_ace: '',
+  description: '',
 });
 
 const selectedFile = ref('');
 
 async function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  selectedFile.value = file.name;
+  const file = await open({
+    multiple: false,
+    directory: false,
+  });
+  console.log(typeof file, '***', file);
 
   try {
-    console.log("Detalhes do arquivo:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      path: file.path,
-    });
-
-      // Ler como texto (não funciona bem com PDF, mas mostra algo)
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    console.log("🔎 Conteúdo em texto:", e.target.result.slice(0, 200)); // mostra primeiros 200 chars
-  };
-  reader.readAsText(file);
-
-  // Ler como ArrayBuffer (binário)
-  const buffer = await file.arrayBuffer();
-  console.log("🔎 Conteúdo em bytes:", new Uint8Array(buffer).slice(0, 50)); // primeiros 50 bytes
-
-    const result = await invoke('process_pdf', { file_path: file.path }); 
+    const result = await invoke('process_pdf', { file_path: file });
     const produtos = JSON.parse(result);
 
     // Expande volumes se necessário
     const etiquetasComVolumes = [];
     produtos.forEach(p => {
-      if (p.vol_ace) {
-        const total = parseInt(p.vol_ace.split('/')[1]);
-        for (let i = 1; i <= total; i++) {
-          etiquetasComVolumes.push({ ...p, volume: `${String(i).padStart(2,'0')}/${String(total).padStart(2,'0')}` });
+        if (p.vol_ace) {
+          let total = parseInt(p.vol_ace.split("/")[1]);
+          if (!total || total < 1) {
+            total = 1; // fallback
+          }
+          for (let i = 1; i <= total; i++) {
+            etiquetasComVolumes.push({ 
+              ...p, 
+              vol_ace: `${String(i).padStart(2,'0')}/${String(total).padStart(2,'0')}` 
+            });
+          }
+        } else {
+          etiquetasComVolumes.push(p);
         }
-      } else {
-        etiquetasComVolumes.push(p);
-      }
+
     });
 
     etiquetas.value = etiquetasComVolumes;
@@ -178,14 +170,14 @@ function adicionarEtiqueta() {
 
   // limpa o formulário
   form.value = {
-    tipoPedido: "",
-    numeroPedido: "",
-    filial: "",
-    data: "",
-    enderecoEntrega: "",
-    codigoProduto: "",
-    volume: "",
-    nome: "",
+    tipo_pedido: '',
+    numero_pedido: '',
+    filial_pedido: '',
+    data_pedido: '',
+    endereco_entrega: '',
+    code: '',
+    vol_ace: '',
+    description: '',
   };
 }
 
