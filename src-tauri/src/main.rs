@@ -2,15 +2,26 @@
 
 use std::process::Command;
 use tauri::command;
+use std::path::PathBuf;
+
+fn get_bin_path() -> PathBuf {
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+
+    if cfg!(target_os = "windows") {
+        path.push("src/bin/pdf_parser.exe"); // binário Windows
+    } else {
+        path.push("src/bin/pdf_parser");     // binário Linux/macOS
+    }
+
+    path
+}
 
 #[command]
-fn process_pdf() -> Result<String, String> {
-    let bin_path = "/home/elielton/Documentos/Projetos-Web/Generate-Tags/src-tauri/src/bin/pdf_parser";
-
-    println!("Current dir: {:?}", std::env::current_dir());
+fn process_pdf(file: String) -> Result<String, String> {
+    let bin_path = get_bin_path();
 
     let output = Command::new(bin_path)
-        .arg("/home/elielton/Downloads/report.pdf")
+        .arg(file)
         .output()
         .map_err(|e| e.to_string())?;
 
