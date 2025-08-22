@@ -67,6 +67,9 @@
             <input v-model="form.nome" class="input" />
           </div>
           <div class="col-span-2 text-right">
+            <button @click="print" class="px-6 mr-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+              🖨️ Imprimir Etiquetas
+            </button>
             <button type="submit" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
               ➕ Adicionar Etiqueta
             </button>
@@ -74,16 +77,10 @@
         </form>
       </div>
 
-      <div class="w-full flex justify-end mt-4">
-        <button @click="imprimirEtiquetas" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-          🖨️ Imprimir Etiquetas
-        </button>
-      </div>
-
       <!-- Lista de etiquetas -->
       <section class="w-full mt-10">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Etiquetas Geradas</h2>
-        <div class="etiqueta-to-print" v-if="etiquetas.length > 0">
+        <div id="invoiceContent" v-if="etiquetas.length > 0">
           <Etiqueta v-for="(et, index) in etiquetas" :key="index" v-bind="et" @deletar="removerEtiqueta(index)" />
         </div>
         <p v-else class="text-gray-600 text-center">Nenhuma etiqueta gerada ainda.</p>
@@ -97,37 +94,6 @@ import { ref } from 'vue';
 import Etiqueta from './components/Etiqueta.vue';
 
 const etiquetas = ref([]);
-
-function imprimirEtiquetas() {
-  const etiquetasContainer = document.createElement('div');
-
-  // Clona cada etiqueta do DOM
-  document.querySelectorAll('.etiqueta-to-print').forEach((el) => {
-    etiquetasContainer.appendChild(el.cloneNode(true));
-  });
-
-  const printWindow = window.open('', '_blank', 'width=400,height=600');
-  if (!printWindow) return;
-
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Imprimir Etiquetas</title>
-        <style>
-          body { margin: 0; padding: 10px; font-family: Arial, sans-serif; }
-          .etiqueta { margin-bottom: 10px; }
-        </style>
-      </head>
-      <body>
-        ${etiquetasContainer.innerHTML}
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-  printWindow.close();
-}
 
 // Formulário
 const form = ref({
@@ -179,5 +145,53 @@ function adicionarEtiqueta() {
 
 function removerEtiqueta(index) {
   etiquetas.value.splice(index, 1);
+}
+
+function print() {
+  const content = document.getElementById('invoiceContent')?.innerHTML;
+  if (!content) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) return;
+
+  // Importa os estilos do Tailwind do app
+  const styles = Array.from(document.styleSheets)
+    .map((style) => {
+      try {
+        return `<link rel="stylesheet" href="${style.href}">`;
+      } catch {
+        return '';
+      }
+    })
+    .join('');
+
+  doc.open();
+  doc.write(`
+    <html>
+      <head>
+        ${styles}
+        <style>
+          /* Ajustes específicos de impressão */
+          @media print {
+            body { background: white; width: 100mm; }
+            button { display: none; } /* Oculta botões */
+          }
+        </style>
+      </head>
+      <body onload="window.print(); setTimeout(() => window.close(), 100);">
+        ${content}
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  setTimeout(() => document.body.removeChild(iframe), 2000);
 }
 </script>
