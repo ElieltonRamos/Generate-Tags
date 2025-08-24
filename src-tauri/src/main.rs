@@ -8,9 +8,9 @@ fn get_bin_path() -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
 
     if cfg!(target_os = "windows") {
-        path.push("src/bin/pdf_parser.exe"); // binário Windows
+        path.push("utils/pdf_parser.exe"); // binário Windows
     } else {
-        path.push("src/bin/pdf_parser");     // binário Linux/macOS
+        path.push("utils/pdf_parser");     // binário Linux/macOS
     }
 
     path
