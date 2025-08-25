@@ -68,7 +68,14 @@
             <input v-model="form.description" class="input" />
           </div>
           <div class="col-span-2 text-right">
-            <button @click="print" class="px-6 mr-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            <button 
+              type="button" 
+              @click="limparEtiquetas" 
+              class="px-6 py-2 mr-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              ❌ Limpar Etiquetas
+            </button>
+            <button @click="print" type="button" class="px-6 mr-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
               🖨️ Imprimir Etiquetas
             </button>
             <button type="submit" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
@@ -147,7 +154,6 @@ async function handleFileUpload(event) {
     console.error("Erro ao processar PDF:", err);
   }
 }
-
 function adicionarEtiqueta() {
   const dados = { ...form.value };
 
@@ -182,12 +188,12 @@ function adicionarEtiqueta() {
     description: '',
   };
 }
-
-
+function limparEtiquetas() {
+  etiquetas.value = [];
+}
 function removerEtiqueta(index) {
   etiquetas.value.splice(index, 1);
 }
-
 function print() {
   const content = document.getElementById('invoiceContent')?.innerHTML;
   if (!content) return;
