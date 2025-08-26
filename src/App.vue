@@ -195,6 +195,7 @@ function limparEtiquetas() {
 function removerEtiqueta(index) {
   etiquetas.value.splice(index, 1);
 }
+
 function print() {
   const content = document.getElementById('invoiceContent')?.innerHTML;
   if (!content) return;
@@ -226,19 +227,36 @@ function print() {
       <head>
         ${styles}
         <style>
-          /* Ajustes específicos de impressão */
           @media print {
-            body { background: white; width: 100mm; }
-            button { display: none; }
+            @page {
+              size: 100mm 50mm;  /* tamanho da etiqueta */
+              margin: 0;        /* sem margens extras */
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              width: 100mm;
+              height: 50mm;
+            }
+
             .etiqueta {
+              width: 100mm;
+              height: 50mm;
               page-break-inside: avoid;
               break-inside: avoid;
+            }
+
+            button, .no-print {
+              display: none !important;
             }
           }
         </style>
       </head>
       <body onload="window.print(); setTimeout(() => window.close(), 100);">
-        ${content}
+        <div class="etiqueta">
+          ${content}
+        </div>
       </body>
     </html>
   `);
@@ -246,4 +264,6 @@ function print() {
 
   setTimeout(() => document.body.removeChild(iframe), 2000);
 }
+
+
 </script>
