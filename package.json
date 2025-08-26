@@ -14,7 +14,9 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "tauri:build-windows": "cargo tauri build --target x86_64-pc-windows-gnu",
-    "tauri:build-linux": "cargo tauri build --bundles deb"
+    "tauri:build-linux": "cargo tauri build --bundles deb",
+    "posttauri:build-windows": "mkdir -p installer && cp src-tauri/target/x86_64-pc-windows-gnu/release/bundle/nsis/*.exe installer/",
+    "posttauri:build-linux": "mkdir -p installer && cp src-tauri/target/release/bundle/deb/*.deb installer/"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
