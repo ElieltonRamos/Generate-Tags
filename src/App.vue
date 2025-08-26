@@ -65,7 +65,7 @@
           </div>
           <div class="col-span-2">
             <label class="block text-sm font-medium text-gray-900">Nome</label>
-            <input v-model="form.description" class="input" />
+            <input v-model="form.nome" class="input" />
           </div>
           <div class="col-span-2 text-right">
             <button 
@@ -114,6 +114,7 @@ const form = ref({
   endereco_entrega: '',
   code: '',
   vol_ace: '',
+  nome: '',
   description: '',
 });
 
@@ -129,49 +130,64 @@ async function handleFileUpload(event) {
     const result = await invoke('process_pdf', { file: file });
     const produtos = JSON.parse(result);
 
-    // Expande volumes se necessário
     const etiquetasComVolumes = [];
+
     produtos.produtos.forEach(p => {
+        let totalVolumes = 1;
+
         if (p.vol_ace) {
-          let total = parseInt(p.vol_ace.split("/")[1]);
-          if (!total || total < 1) {
-            total = 1; // fallback
-          }
-          for (let i = 1; i <= total; i++) {
-            etiquetasComVolumes.push({ 
-              ...p, 
-              vol_ace: `${String(i).padStart(2,'0')}/${String(total).padStart(2,'0')}` 
-            });
-          }
-        } else {
-          etiquetasComVolumes.push(p);
+            const partes = p.vol_ace.split("/");
+            const volumes = parseInt(partes[0]);
+            if (!isNaN(volumes) && volumes > 0) {
+                totalVolumes = volumes;
+            }
         }
 
+        const qtd = parseInt(p.quantity) || 1;
+
+        for (let q = 0; q < qtd; q++) {
+            for (let v = 1; v <= totalVolumes; v++) {
+                etiquetasComVolumes.push({
+                    ...p,
+                    vol_ace: `${String(v).padStart(2,'0')}/${String(totalVolumes).padStart(2,'0')}`
+                });
+            }
+        }
     });
 
     etiquetas.value = etiquetasComVolumes;
+
   } catch (err) {
-    alert("Erro ao processar PDF" + err)
-    console.error("Erro ao processar PDF:", err);
+    alert("Erro ao processar PDF " + err.message)
   }
 }
+
 function adicionarEtiqueta() {
   const dados = { ...form.value };
 
-  // Expande volumes se necessário
   const etiquetasComVolumes = [];
+
+  // Número de volumes
+  let totalVolumes = 1;
   if (dados.vol_ace) {
     const parts = dados.vol_ace.split('/');
-    let total = parseInt(parts[1]);
-    if (!total || total < 1) total = 1; // fallback
-    for (let i = 1; i <= total; i++) {
+    const volumes = parseInt(parts[0]); // primeiro número = quantidade de volumes
+    if (!isNaN(volumes) && volumes > 0) {
+      totalVolumes = volumes;
+    }
+  }
+
+  // Quantidade do produto
+  const qtd = parseInt(dados.quantity) || 1;
+
+  // Gera etiquetas: quantity × volumes
+  for (let q = 0; q < qtd; q++) {
+    for (let v = 1; v <= totalVolumes; v++) {
       etiquetasComVolumes.push({
         ...dados,
-        vol_ace: `${String(i).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
+        vol_ace: `${String(v).padStart(2, '0')}/${String(totalVolumes).padStart(2, '0')}`,
       });
     }
-  } else {
-    etiquetasComVolumes.push(dados);
   }
 
   // Adiciona à lista global
@@ -187,8 +203,11 @@ function adicionarEtiqueta() {
     code: '',
     vol_ace: '',
     description: '',
+    quantity: '',
+    name: '',
   };
 }
+
 function limparEtiquetas() {
   etiquetas.value = [];
 }
