@@ -131,7 +131,7 @@ async function handleFileUpload(event) {
 
     // Expande volumes se necessário
     const etiquetasComVolumes = [];
-    produtos.forEach(p => {
+    produtos.produtos.forEach(p => {
         if (p.vol_ace) {
           let total = parseInt(p.vol_ace.split("/")[1]);
           if (!total || total < 1) {
@@ -151,6 +151,7 @@ async function handleFileUpload(event) {
 
     etiquetas.value = etiquetasComVolumes;
   } catch (err) {
+    alert("Erro ao processar PDF" + err)
     console.error("Erro ao processar PDF:", err);
   }
 }
