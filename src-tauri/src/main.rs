@@ -1,0 +1,47 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use std::process::Command;
+use std::path::PathBuf;
+use tauri::command;
+
+fn get_bin_path() -> PathBuf {
+    let mut path = std::env::current_exe().expect("❌ Não conseguiu pegar o caminho do executável");
+
+    path.pop();
+
+    path.push("utils");
+
+    if cfg!(target_os = "windows") {
+        path.push("pdf_parser_win10.exe");
+    } else {
+        path.push("pdf_parser_linux"); // sem .exe no Linux
+    }
+
+    path
+}
+
+#[command]
+fn process_pdf(file: String) -> Result<String, String> {
+    let bin_path = get_bin_path();
+
+    let output = Command::new(&bin_path)
+        .arg(&file)
+        .output()
+        .map_err(|e| e.to_string())?;
+
+    if output.status.success() {
+        let result = String::from_utf8_lossy(&output.stdout).to_string();
+        Ok(result)
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr).to_string();
+        Err(err)
+    }
+}
+
+fn main() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![process_pdf])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
